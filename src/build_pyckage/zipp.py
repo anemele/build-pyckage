@@ -12,12 +12,12 @@ if not (OUTPUT_DIR / ".gitignore").exists():
 
 
 def _create_zip(path: Path, info_list: Iterable[PackageInfo]):
-    with zipfile.ZipFile(path, "w") as zf:
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for info in info_list:
             zf.write(info.join(), arcname=info.rel)
 
 
-def create_zip(package_path: str) -> Path:
+def create_zip(package_path: Path) -> Path:
     package, info_list = prepare_files(package_path)
     # for info in info_list:
     #     print(info.join())

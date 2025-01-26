@@ -26,7 +26,7 @@ def parse_packages(s: str) -> Iterator[Package]:
     return starmap(Package, tmp)
 
 
-def parse_dependencies(p: str) -> Iterator[Package]:
+def parse_dependencies(p: Path) -> Iterator[Package]:
     """Run at the root of the project to get all dependencies"""
     res = subprocess.run("uv tree --no-dev", capture_output=True, cwd=p).stdout.decode()
     return parse_packages(res)
@@ -41,33 +41,37 @@ class PackageInfo:
         return str(self.pre / self.rel)
 
 
-SITE_PACKAGES = Path(".venv/Lib/site-packages")
+SITE_PACKAGES = ".venv/Lib/site-packages"
 
 
-def read_record(package: Package) -> Iterable[PackageInfo]:
-    pkg_path = SITE_PACKAGES / str(package)
+def read_record(root: Path, package: Package) -> Iterable[PackageInfo]:
+    root = root / SITE_PACKAGES
+    pkg_path = root / package.info()
     if not pkg_path.exists():
-        pkg_path = SITE_PACKAGES / package.toggle().info()
+        pkg_path = root / package.toggle().info()
 
     lines = (pkg_path / "RECORD").read_text().splitlines()
     for line in lines:
         path, *_ = line.split(",", 1)
-        if path.endswith(".py") and not path.startswith("../../Scripts/"):
-            yield PackageInfo(SITE_PACKAGES, path)
+        if ".dist-info" in path:
+            continue
+        if path.startswith("../../Scripts/") or path.startswith("..\\..\\Scripts\\"):
+            continue
+        yield PackageInfo(root, path)
 
 
-def get_files(packages: Iterable[Package]) -> Iterable[PackageInfo]:
+def get_files(root: Path, packages: Iterable[Package]) -> Iterable[PackageInfo]:
     for package in packages:
-        yield from read_record(package)
+        yield from read_record(root, package)
 
 
-def prepare_files(root: str) -> tuple[Package, Iterable[PackageInfo]]:
+def prepare_files(root: Path) -> tuple[Package, Iterable[PackageInfo]]:
     deps = parse_dependencies(root)
     this_package = next(deps)
 
     def get_this_files():
-        root = Path("src")
-        for path in (root / this_package.toggle().name).glob("**/*.py"):
-            yield PackageInfo(root, str(path.relative_to(root)))
+        src = root / "src"
+        for path in (src / this_package.toggle().name).glob("**/*.py"):
+            yield PackageInfo(src, str(path.relative_to(src)))
 
-    return this_package, chain(get_this_files(), get_files(deps))
+    return this_package, chain(get_this_files(), get_files(root, deps))

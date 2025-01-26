@@ -1,6 +1,7 @@
 """Build a Python package based on `uv`"""
 
 import argparse
+from pathlib import Path
 
 from .zipp import create_zip
 
@@ -12,13 +13,13 @@ def main():
     )
     parser.add_argument(
         "package_path",
-        type=str,
+        type=Path,
         nargs="?",
-        default=".",
+        default=Path(),
         help="The directory containing the package to build",
     )
     args = parser.parse_args()
-    package_path: str = args.package_path
+    package_path: Path = args.package_path
 
     try:
         filepath = create_zip(package_path)
