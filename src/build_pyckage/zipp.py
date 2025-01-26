@@ -4,21 +4,29 @@ from typing import Iterable
 
 from .dep import PackageInfo, prepare_files
 
-OUTPUT_DIR = Path("pyckage")
-if not OUTPUT_DIR.exists():
-    OUTPUT_DIR.mkdir()
-if not (gitignore := OUTPUT_DIR / ".gitignore").exists():
-    gitignore.write_text("*")
+OUTPUT_DIR = "pyckage"
+
+
+def ensure_output(path: Path):
+    if not path.exists():
+        path.mkdir()
+    if not (gitignore := path / ".gitignore").exists():
+        gitignore.write_text("*")
 
 
 def _create_zip(path: Path, info_list: Iterable[PackageInfo]):
-    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(path, "w") as zf:
         alreay_added = set()
         for info in info_list:
             if info.rel in alreay_added:
                 continue
             alreay_added.add(info.rel)
-            zf.write(info.join(), arcname=info.rel)
+
+            zf.writestr(
+                zipfile.ZipInfo(info.rel),
+                info.join().read_bytes(),
+                compress_type=zipfile.ZIP_DEFLATED,
+            )
 
 
 def create_zip(package_path: Path) -> Path:
@@ -32,6 +40,8 @@ def create_zip(package_path: Path) -> Path:
         py_ver = "0.0"
 
     filename = f"{package.name}-{package.version}-py{py_ver}.zip"
-    filepath = OUTPUT_DIR / filename
+    output_path = package_path / OUTPUT_DIR
+    ensure_output(output_path)
+    filepath = output_path / filename
     _create_zip(filepath, info_list)
     return filepath

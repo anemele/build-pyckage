@@ -38,7 +38,7 @@ class PackageInfo:
     rel: str
 
     def join(self):
-        return str(self.pre / self.rel)
+        return self.pre / self.rel
 
 
 SITE_PACKAGES = ".venv/Lib/site-packages"
