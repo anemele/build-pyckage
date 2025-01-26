@@ -26,9 +26,9 @@ def parse_packages(s: str) -> Iterator[Package]:
     return starmap(Package, tmp)
 
 
-def parse_dependencies() -> Iterator[Package]:
+def parse_dependencies(p: str) -> Iterator[Package]:
     """Run at the root of the project to get all dependencies"""
-    res = subprocess.run("uv tree --no-dev", capture_output=True).stdout.decode()
+    res = subprocess.run("uv tree --no-dev", capture_output=True, cwd=p).stdout.decode()
     return parse_packages(res)
 
 
@@ -61,8 +61,8 @@ def get_files(packages: Iterable[Package]) -> Iterable[PackageInfo]:
         yield from read_record(package)
 
 
-def prepare_files() -> tuple[Package, Iterable[PackageInfo]]:
-    deps = parse_dependencies()
+def prepare_files(root: str) -> tuple[Package, Iterable[PackageInfo]]:
+    deps = parse_dependencies(root)
     this_package = next(deps)
 
     def get_this_files():

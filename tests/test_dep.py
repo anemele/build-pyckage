@@ -1,4 +1,4 @@
-from build_pyckage.dep import parse_packages, Package
+from build_pyckage.dep import Package, parse_packages
 
 
 def test_parse_packages():
