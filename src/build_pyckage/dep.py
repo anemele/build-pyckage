@@ -53,9 +53,7 @@ def read_record(root: Path, package: Package) -> Iterable[PackageInfo]:
     lines = (pkg_path / "RECORD").read_text().splitlines()
     for line in lines:
         path, *_ = line.split(",", 1)
-        if ".dist-info" in path:
-            continue
-        if path.startswith("../../Scripts/") or path.startswith("..\\..\\Scripts\\"):
+        if path.startswith(".."):
             continue
         yield PackageInfo(root, path)
 
@@ -69,9 +67,13 @@ def prepare_files(root: Path) -> tuple[Package, Iterable[PackageInfo]]:
     deps = parse_dependencies(root)
     this_package = next(deps)
 
-    def get_this_files():
-        src = root / "src"
-        for path in (src / this_package.toggle().name).glob("**/*.py"):
-            yield PackageInfo(src, str(path.relative_to(src)))
+    def get_this_files(root: Path):
+        root = root / "src"
+        for top, _, files in root.walk():
+            if top.name == "__pycache__":
+                continue
+            for file in files:
+                rel = (top / file).relative_to(root)
+                yield PackageInfo(root, str(rel))
 
-    return this_package, chain(get_this_files(), get_files(root, deps))
+    return this_package, chain(get_this_files(root), get_files(root, deps))
