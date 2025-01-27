@@ -26,3 +26,7 @@ def main():
         print(f"Package created at\n  {filepath}")
     except Exception as e:
         print(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
