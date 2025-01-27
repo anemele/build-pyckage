@@ -22,8 +22,7 @@ def prepare_embedded_python(version: str) -> Optional[zipfile.ZipFile]:
         sr = re.search(r"python-(\d+)\.(\d+)\.(\d+)-embed-amd64.zip", path.name)
         if sr is None:
             return (0, 0, 0)
-        major, minor, patch = map(int, sr.group())
-        return (major, minor, patch)
+        return (int(sr.group(1)), int(sr.group(2)), int(sr.group(3)))
 
     latest_path = max(glob_res, key=get_semver)
     return zipfile.ZipFile(latest_path, "r")

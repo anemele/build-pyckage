@@ -43,7 +43,7 @@ def _gen_items(info_list: Iterable[PackageInfo], embed_zip: Optional[zipfile.Zip
         )
 
     yield ZipItem(zipfile.ZipInfo(f"{BIN_PREFIX}/{LIB_PREFIX}.pth"), f"../{LIB_PREFIX}")
-    yield ZipItem(zipfile.ZipInfo("python.bat"), f"%~dp0{BIN_PREFIX}\\python.exe")
+    yield ZipItem(zipfile.ZipInfo("python.bat"), f"@%~dp0{BIN_PREFIX}\\python.exe %*")
 
 
 def _create_zip(path: Path, items: Iterable[ZipItem]):
