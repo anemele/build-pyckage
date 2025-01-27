@@ -1,11 +1,11 @@
 [project]
 name = "build-pyckage"
-version = "0.1.4"
+version = "0.1.5"
 description = "build python package"
 readme = "README.md"
 authors = [{ name = "Jason Swift", email = "anemele@outlook.com" }]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["mashumaro[toml]>=3.15"]
 
 [project.scripts]
 build-pyckage = "build_pyckage.cli:main"

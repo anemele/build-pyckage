@@ -5,7 +5,7 @@ from typing import Iterable, Optional
 
 from .dep import PathInfo, prepare_files
 from .embed import prepare_embedded_python
-from .parser import Project, read_pyproject_toml_file
+from .parser import Project, PyProject
 from .utils import ensure_path
 
 OUTPUT_DIR = "pyckage"
@@ -63,12 +63,16 @@ def _create_zip(path: Path, items: Iterable[ZipItem]):
 
 
 def create_zip(package_path: Path) -> Optional[Path]:
-    project = read_pyproject_toml_file(package_path)
-    if project is None:
+    pyproject = PyProject.from_file(package_path)
+    if pyproject is None:
         print(f"No pyproject.toml found in {package_path.resolve()}")
         return None
+    project = pyproject.project
 
-    package, info_list = prepare_files(package_path)
+    info_list = prepare_files(package_path, project.name)
+    if info_list is None:
+        print(f"No dependencies found in {package_path.resolve()}")
+        return None
 
     # get python version by reading `.python-version` by `uv`
     py_ver_file = package_path / ".python-version"
@@ -77,7 +81,7 @@ def create_zip(package_path: Path) -> Optional[Path]:
     else:
         py_ver = "0.0"
 
-    filename = f"{package.name}-{package.version}-py{py_ver}.zip"
+    filename = f"{project.name}-{project.version}-py{py_ver}.zip"
     output_path = package_path / OUTPUT_DIR
     ensure_path(output_path)
     filepath = output_path / filename
