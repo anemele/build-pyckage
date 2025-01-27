@@ -74,13 +74,8 @@ def create_zip(package_path: Path) -> Optional[Path]:
         print(f"No dependencies found in {package_path.resolve()}")
         return None
 
-    # get python version by reading `.python-version` by `uv`
-    py_ver_file = package_path / ".python-version"
-    if py_ver_file.exists():
-        py_ver = py_ver_file.read_text().strip()
-    else:
-        py_ver = "0.0"
-
+    # this line may need to be changed
+    py_ver = project.requires_python.removeprefix(">=")
     filename = f"{project.name}-{project.version}-py{py_ver}.zip"
     output_path = package_path / OUTPUT_DIR
     ensure_path(output_path)

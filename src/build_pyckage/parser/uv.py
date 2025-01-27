@@ -51,7 +51,7 @@ class Project:
     version: str
     # description: str
     # authors: list
-    # requires_python: str
+    requires_python: str = field(metadata=field_options(alias="requires-python"))
     dependencies: list[str] = field(default_factory=list)
     scripts: dict[str, str] = field(default_factory=dict)
 
