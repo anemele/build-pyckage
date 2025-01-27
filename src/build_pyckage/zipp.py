@@ -14,8 +14,16 @@ def ensure_output(path: Path):
         gitignore.write_text("*")
 
 
+LIB_PREFIX = "lib"
+
+
 def _create_zip(path: Path, info_list: Iterable[PackageInfo]):
     with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr(
+            zipfile.ZipInfo(f"{LIB_PREFIX}.pth"),
+            f"../{LIB_PREFIX}",
+            compress_type=zipfile.ZIP_DEFLATED,
+        )
         alreay_added = set()
         for info in info_list:
             if info.rel in alreay_added:
@@ -23,7 +31,7 @@ def _create_zip(path: Path, info_list: Iterable[PackageInfo]):
             alreay_added.add(info.rel)
 
             zf.writestr(
-                zipfile.ZipInfo(info.rel),
+                zipfile.ZipInfo(f"{LIB_PREFIX}/{info.rel}"),
                 info.join().read_bytes(),
                 compress_type=zipfile.ZIP_DEFLATED,
             )
