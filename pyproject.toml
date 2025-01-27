@@ -5,11 +5,7 @@ description = "build python package"
 readme = "README.md"
 authors = [{ name = "Jason Swift", email = "anemele@outlook.com" }]
 requires-python = ">=3.12"
-dependencies = [
-    "requests>=2.32.3",
-    "returns>=0.24.0",
-    "semver>=3.0.4",
-]
+dependencies = ["returns>=0.24.0"]
 
 [project.scripts]
 build-pyckage = "build_pyckage:main"
@@ -22,6 +18,4 @@ build-backend = "hatchling.build"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
 [dependency-groups]
-dev = [
-    "pytest>=8.3.4",
-]
+dev = ["pytest>=8.3.4"]

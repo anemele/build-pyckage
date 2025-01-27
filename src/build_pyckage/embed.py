@@ -1,38 +1,25 @@
 import os
-import os.path as osp
+import re
 import zipfile
+from pathlib import Path
 
-import requests
-from semver import Version as SemVer
-
-EMBEDDED_PYTHON_DIR = os.getenv("EMBEDDED_PYTHON_DIR", "")
-if not osp.exists(EMBEDDED_PYTHON_DIR):
-    os.mkdir(EMBEDDED_PYTHON_DIR)
+EMBEDDED_PYTHON_DIR = Path(os.getenv("EMBEDDED_PYTHON_DIR", ""))
+if not EMBEDDED_PYTHON_DIR.exists():
+    EMBEDDED_PYTHON_DIR.mkdir()
 
 
-def get_embedded_python(version: SemVer) -> str:
-    filepath = osp.join(EMBEDDED_PYTHON_DIR, f"python-{version}-embed-amd64.zip")
-    return filepath
+def prepare_embedded_python(version: str) -> zipfile.ZipFile:
+    glob_res = EMBEDDED_PYTHON_DIR.glob(f"python-{version}*-embed-amd64.zip")
+    glob_res = list(glob_res)
 
+    if len(glob_res) == 0:
+        print("not found embedded python. download first.")
 
-def get_embedded_python_url(version: SemVer) -> str:
-    return (
-        "https://www.python.org/ftp/python/"
-        + f"{version}/python-{version}-embed-amd64.zip"
-    )
+    def get_semver(path: Path) -> tuple[int, int, int]:
+        sr = re.search(r"python-(\d+)\.(\d+)\.(\d+)-embed-amd64.zip", path.name)
+        if sr is None:
+            return (0, 0, 0)
+        return (int(sr.group(1)), int(sr.group(2)), int(sr.group(3)))
 
-
-def prepare_embedded_python(version: SemVer) -> zipfile.ZipFile:
-    filepath = get_embedded_python(version)
-
-    if osp.exists(filepath):
-        return zipfile.ZipFile(filepath)
-
-    url = get_embedded_python_url(version)
-    res = requests.get(url, stream=True)
-    res.raise_for_status()
-    with open(filepath, "rwb") as f:
-        for chunk in res.iter_content(chunk_size=8192):
-            f.write(chunk)
-        f.seek(0)
-        return zipfile.ZipFile(f)
+    latest_path = max(glob_res, key=get_semver)
+    return zipfile.ZipFile(latest_path, "r")
