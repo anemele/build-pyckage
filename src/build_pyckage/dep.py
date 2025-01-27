@@ -33,7 +33,7 @@ def parse_dependencies(p: Path) -> Iterator[Package]:
 
 
 @dataclass
-class PackageInfo:
+class PathInfo:
     pre: Path
     rel: str
 
@@ -44,7 +44,7 @@ class PackageInfo:
 SITE_PACKAGES = ".venv/Lib/site-packages"
 
 
-def read_record(root: Path, package: Package) -> Iterable[PackageInfo]:
+def read_record(root: Path, package: Package) -> Iterable[PathInfo]:
     root = root / SITE_PACKAGES
     pkg_path = root / package.info()
     if not pkg_path.exists():
@@ -55,15 +55,15 @@ def read_record(root: Path, package: Package) -> Iterable[PackageInfo]:
         path, *_ = line.split(",", 1)
         if path.startswith(".."):
             continue
-        yield PackageInfo(root, path)
+        yield PathInfo(root, path)
 
 
-def get_files(root: Path, packages: Iterable[Package]) -> Iterable[PackageInfo]:
+def get_files(root: Path, packages: Iterable[Package]) -> Iterable[PathInfo]:
     for package in packages:
         yield from read_record(root, package)
 
 
-def prepare_files(root: Path) -> tuple[Package, Iterable[PackageInfo]]:
+def prepare_files(root: Path) -> tuple[Package, Iterable[PathInfo]]:
     deps = parse_dependencies(root)
     this_package = next(deps)
 
@@ -74,6 +74,6 @@ def prepare_files(root: Path) -> tuple[Package, Iterable[PackageInfo]]:
                 continue
             for file in files:
                 rel = (top / file).relative_to(root)
-                yield PackageInfo(root, str(rel))
+                yield PathInfo(root, str(rel))
 
     return this_package, chain(get_this_files(root), get_files(root, deps))

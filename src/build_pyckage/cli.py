@@ -23,7 +23,8 @@ def main():
 
     try:
         filepath = create_zip(package_path)
-        print(f"Package created at\n  {filepath}")
+        if filepath is not None:
+            print(f"Package created at\n  {filepath}")
     except Exception as e:
         print(f"Error: {e}")
 

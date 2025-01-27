@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-from .dep import PackageInfo, prepare_files
+from .dep import PathInfo, prepare_files
 from .embed import prepare_embedded_python
+from .parser import Project, read_pyproject_toml_file
 from .utils import ensure_path
 
 OUTPUT_DIR = "pyckage"
-
 
 LIB_PREFIX = "lib"
 BIN_PREFIX = "bin"
@@ -20,7 +20,11 @@ class ZipItem:
     data: bytes | str
 
 
-def _gen_items(info_list: Iterable[PackageInfo], embed_zip: Optional[zipfile.ZipFile]):
+def _gen_items(
+    project: Project,
+    info_list: Iterable[PathInfo],
+    embed_zip: Optional[zipfile.ZipFile],
+):
     alreay_added = set()
     for info in info_list:
         if info.rel in alreay_added:
@@ -33,7 +37,6 @@ def _gen_items(info_list: Iterable[PackageInfo], embed_zip: Optional[zipfile.Zip
 
     if embed_zip is None:
         return
-
     for info in embed_zip.infolist():
         if info.filename.endswith("._pth"):
             continue
@@ -45,6 +48,13 @@ def _gen_items(info_list: Iterable[PackageInfo], embed_zip: Optional[zipfile.Zip
     yield ZipItem(zipfile.ZipInfo(f"{BIN_PREFIX}/{LIB_PREFIX}.pth"), f"../{LIB_PREFIX}")
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"@%~dp0{BIN_PREFIX}\\python.exe %*")
 
+    for name, script in project.scripts.items():
+        module_name = script.split(":", 1)[0]
+        yield ZipItem(
+            zipfile.ZipInfo(f"{name}.bat"),
+            f"@%~dp0{BIN_PREFIX}\\python.exe -m {module_name} %*",
+        )
+
 
 def _create_zip(path: Path, items: Iterable[ZipItem]):
     with zipfile.ZipFile(path, "w") as zf:
@@ -52,7 +62,12 @@ def _create_zip(path: Path, items: Iterable[ZipItem]):
             zf.writestr(item.info, item.data, compress_type=zipfile.ZIP_DEFLATED)
 
 
-def create_zip(package_path: Path) -> Path:
+def create_zip(package_path: Path) -> Optional[Path]:
+    project = read_pyproject_toml_file(package_path)
+    if project is None:
+        print(f"No pyproject.toml found in {package_path.resolve()}")
+        return None
+
     package, info_list = prepare_files(package_path)
 
     # get python version by reading `.python-version` by `uv`
@@ -66,7 +81,7 @@ def create_zip(package_path: Path) -> Path:
     output_path = package_path / OUTPUT_DIR
     ensure_path(output_path)
     filepath = output_path / filename
-    zip_items = _gen_items(info_list, prepare_embedded_python(py_ver))
+    zip_items = _gen_items(project, info_list, prepare_embedded_python(py_ver))
     _create_zip(filepath, zip_items)
 
     return filepath
