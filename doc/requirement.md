@@ -15,9 +15,12 @@ and with the project structure as follows:
 │       ├── __main__.py
 │       ├── cli.py
 │       └── xxx.py
-└── tests
-    ├── __init__.py
-    └── test_xxx.py
+├── tests
+│   ├── __init__.py
+│   └── test_xxx.py
+└── .venv
+    └── Lib
+        └── site-packages
 ```
 
 If there is any script defined in `pyproject.toml`,
