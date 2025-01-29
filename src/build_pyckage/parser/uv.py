@@ -65,6 +65,14 @@ class PyProject(DataClassTOMLMixin):
         return "pyproject.toml"
 
 
+def read_pyproject(root: Path) -> Optional[Project]:
+    pyproject = PyProject.from_file(root)
+    if pyproject is None:
+        return None
+
+    return pyproject.project
+
+
 @dataclass
 class Dependency:
     name: str
@@ -87,7 +95,7 @@ class Package:
 
 
 @dataclass
-class LockFile(DataClassTOMLMixin):
+class Lock(DataClassTOMLMixin):
     package: list[Package] = field(default_factory=list)
 
     @classmethod
@@ -109,3 +117,7 @@ class LockFile(DataClassTOMLMixin):
         for opt_deps in self[name].optional_dependencies.values():
             for dep in opt_deps:
                 yield from self.get_deps(dep.name)
+
+
+def read_lock(root: Path) -> Optional[Lock]:
+    return Lock.from_file(root)

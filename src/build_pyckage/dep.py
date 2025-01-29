@@ -3,7 +3,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
-from .parser import LockFile, Package
+from .parser import Package, read_lock
 
 
 @dataclass
@@ -39,11 +39,11 @@ def get_files(root: Path, packages: Iterable[Package]) -> Iterator[PathInfo]:
 
 
 def prepare_files(root: Path, project_name: str) -> Optional[Iterator[PathInfo]]:
-    packages = LockFile.from_file(root)
-    if packages is None:
+    lock = read_lock(root)
+    if lock is None:
         return None
 
-    deps = packages.get_deps(project_name)
+    deps = lock.get_deps(project_name)
     next(deps)
 
     def get_this_files(root: Path):

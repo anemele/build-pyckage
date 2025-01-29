@@ -1,1 +1,1 @@
-from .uv import LockFile, Package, Project, PyProject  # noqa: F401
+from .uv import Package, Project, read_lock, read_pyproject  # noqa: F401

@@ -5,7 +5,7 @@ from typing import Iterable, Optional
 
 from .dep import PathInfo, prepare_files
 from .embed import prepare_embedded_python
-from .parser import Project, PyProject
+from .parser import Project, read_pyproject
 from .utils import ensure_path
 
 OUTPUT_DIR = "pyckage"
@@ -63,11 +63,10 @@ def _create_zip(path: Path, items: Iterable[ZipItem]):
 
 
 def create_zip(package_path: Path) -> Optional[Path]:
-    pyproject = PyProject.from_file(package_path)
-    if pyproject is None:
-        print(f"No pyproject.toml found in {package_path.resolve()}")
+    project = read_pyproject(package_path)
+    if project is None:
+        print(f"Failed to read pyproject.toml: {package_path.resolve()}")
         return None
-    project = pyproject.project
 
     info_list = prepare_files(package_path, project.name)
     if info_list is None:
