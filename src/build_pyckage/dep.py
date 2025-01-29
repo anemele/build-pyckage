@@ -3,7 +3,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
-from .parser import Package, read_lock
+from .parser import Package, Project
 
 
 @dataclass
@@ -38,13 +38,8 @@ def get_files(root: Path, packages: Iterable[Package]) -> Iterator[PathInfo]:
         yield from read_record(root, package)
 
 
-def prepare_files(root: Path, project_name: str) -> Optional[Iterator[PathInfo]]:
-    lock = read_lock(root)
-    if lock is None:
-        return None
-
-    deps = lock.get_deps(project_name)
-    next(deps)
+def prepare_files(root: Path, project: Project) -> Optional[Iterator[PathInfo]]:
+    deps = project.dependencies[1:]
 
     def get_this_files(root: Path):
         root = root / "src"

@@ -1,32 +1,11 @@
+import re
+import subprocess
 from dataclasses import dataclass, field
+from itertools import starmap
 from pathlib import Path
 from typing import Iterator, Optional, Self
 
-from mashumaro import field_options
 from mashumaro.mixins.toml import DataClassTOMLMixin as _DataClassTOMLMixin
-
-# type Item = dict[str, Any]
-
-
-# @overload
-# def to_snake_case(data: Item) -> Item: ...
-# @overload
-# def to_snake_case(data: list[Item]) -> list[Item]: ...
-# def to_snake_case(data: Item | list[Item]) -> Item | list[Item]:
-#     if isinstance(data, list):
-#         return [to_snake_case(d) for d in data]
-
-#     res = {}
-#     for key, value in data.items():
-#         if isinstance(value, dict):
-#             res[key.replace("-", "_")] = to_snake_case(value)
-#         elif isinstance(value, list):
-#             res[key.replace("-", "_")] = [
-#                 to_snake_case(v) if isinstance(v, dict) else v for v in value
-#             ]
-#         else:
-#             res[key.replace("-", "_")] = value
-#     return res
 
 
 class DataClassTOMLMixin(_DataClassTOMLMixin):
@@ -51,8 +30,8 @@ class Project:
     version: str
     # description: str
     # authors: list
-    requires_python: str = field(metadata=field_options(alias="requires-python"))
-    dependencies: list[str] = field(default_factory=list)
+    # requires_python: str = field(metadata=field_options(alias="requires-python"))
+    dependencies: list = field(default_factory=list)
     scripts: dict[str, str] = field(default_factory=dict)
 
 
@@ -65,27 +44,10 @@ class PyProject(DataClassTOMLMixin):
         return "pyproject.toml"
 
 
-def read_pyproject(root: Path) -> Optional[Project]:
-    pyproject = PyProject.from_file(root)
-    if pyproject is None:
-        return None
-
-    return pyproject.project
-
-
-@dataclass
-class Dependency:
-    name: str
-
-
 @dataclass
 class Package:
     name: str
     version: str
-    dependencies: list[Dependency] = field(default_factory=list)
-    optional_dependencies: dict[str, list[Dependency]] = field(
-        default_factory=dict, metadata=field_options(alias="optional-dependencies")
-    )
 
     def to_snake_case(self):
         self.name = self.name.replace("-", "_")
@@ -94,30 +56,26 @@ class Package:
         return f"{self.name}-{self.version}.dist-info"
 
 
-@dataclass
-class Lock(DataClassTOMLMixin):
-    package: list[Package] = field(default_factory=list)
-
-    @classmethod
-    def _toml_file(cls):
-        return "uv.lock"
-
-    def __post_init__(self):
-        self.__mapping = {p.name: p for p in self.package}
-
-    def __getitem__(self, name: str) -> Package:
-        return self.__mapping[name]
-
-    def get_deps(self, name: str) -> Iterator[Package]:
-        yield self[name]
-
-        for dep in self[name].dependencies:
-            yield from self.get_deps(dep.name)
-
-        for opt_deps in self[name].optional_dependencies.values():
-            for dep in opt_deps:
-                yield from self.get_deps(dep.name)
+def get_project(root: Path) -> Optional[Project]:
+    pyproject = PyProject.from_file(root)
+    if pyproject is None:
+        return None
+    project = pyproject.project
+    project.dependencies = list(parse_dependencies(root))
+    return project
 
 
-def read_lock(root: Path) -> Optional[Lock]:
-    return Lock.from_file(root)
+PATTERN = re.compile(r"(?:[└├]──\s)?([a-zA-Z0-9_-]+)\sv([0-9.]+)$", re.MULTILINE)
+
+
+def parse_packages(s: str) -> Iterator[Package]:
+    tmp = PATTERN.findall(s)
+    return starmap(Package, tmp)
+
+
+def parse_dependencies(root: Path) -> Iterator[Package]:
+    """Run at the root of the project to get all dependencies"""
+    res = subprocess.run(
+        "uv tree --no-dev", capture_output=True, cwd=root
+    ).stdout.decode()
+    return parse_packages(res)
