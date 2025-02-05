@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from .zipp import create_zip
+from .core import create_zip
 
 
 def main():
