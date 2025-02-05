@@ -3,12 +3,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
+from .config import load_config
 from .dep import PathInfo, prepare_files
 from .embed import prepare_embedded_python
 from .parser import Project, get_project
-from .utils import ensure_path
-
-OUTPUT_DIR = "pyckage"
 
 LIB_PREFIX = "lib"
 BIN_PREFIX = "bin"
@@ -23,7 +21,7 @@ class ZipItem:
 def _gen_items(
     project: Project,
     info_list: Iterable[PathInfo],
-    embed_zip: Optional[zipfile.ZipFile],
+    embed_zip: zipfile.ZipFile,
 ):
     alreay_added = set()
     for info in info_list:
@@ -73,13 +71,17 @@ def create_zip(package_path: Path) -> Optional[Path]:
         print(f"No dependencies found in {package_path.resolve()}")
         return None
 
+    config = load_config()
+
     # this line may need to be changed
     py_ver = (package_path / ".python-version").read_text().strip()
     filename = f"{project.name}-{project.version}-py{py_ver}.zip"
-    output_path = package_path / OUTPUT_DIR
-    ensure_path(output_path)
-    filepath = output_path / filename
-    zip_items = _gen_items(project, info_list, prepare_embedded_python(py_ver))
+    filepath = config.pyckage_path / filename
+    embed_zip = prepare_embedded_python(py_ver, config)
+    if embed_zip is None:
+        return None
+
+    zip_items = _gen_items(project, info_list, embed_zip)
     _create_zip(filepath, zip_items)
 
     return filepath
