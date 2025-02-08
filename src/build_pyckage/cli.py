@@ -18,8 +18,15 @@ def main():
         default=Path(),
         help="The directory containing the package to build",
     )
+    parser.add_argument("--debug", action="store_true", help="Debug mode")
     args = parser.parse_args()
     package_path: Path = args.package_path
+    debug: bool = args.debug
+
+    if debug:
+        print("Debug mode")
+        create_zip(package_path)
+        return
 
     try:
         filepath = create_zip(package_path)

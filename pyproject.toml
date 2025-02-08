@@ -9,6 +9,7 @@ dependencies = ["mashumaro[toml]>=3.15"]
 
 [project.scripts]
 build-pyckage = "build_pyckage.cli:main"
+pyckage = "build_pyckage.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -22,4 +23,4 @@ dev = ["pytest>=8.3.4"]
 
 [tool.ruff]
 target-version = "py312"
-lint.extend-select = ["I", "UP034"]
+lint.extend-select = ["I", "UP034", "F403"]

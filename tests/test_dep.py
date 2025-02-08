@@ -1,4 +1,4 @@
-from build_pyckage.parser.uv import Package, parse_packages
+from build_pyckage.parser import Package, _parse_packages
 
 
 def test_parse_packages():
@@ -12,7 +12,7 @@ build-pyckage v0.1.0
 └── returns v0.24.0
     └── typing-extensions v4.12.2
 """
-    packages = list(parse_packages(s))
+    packages = list(_parse_packages(s))
     assert len(packages) == 8
     assert packages == [
         Package(name="build-pyckage", version="0.1.0"),

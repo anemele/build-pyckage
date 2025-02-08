@@ -49,11 +49,18 @@ class Package:
     name: str
     version: str
 
-    def to_snake_case(self):
-        self.name = self.name.replace("-", "_")
+    def __hash__(self) -> int:
+        name = self.name.lower().replace("_", "-")
+        return hash((name, self.version))
 
-    def dist_info(self) -> str:
-        return f"{self.name}-{self.version}.dist-info"
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Package):
+            return False
+        if self.version != other.version:
+            return False
+        self_name = self.name.lower().replace("_", "-")
+        other_name = other.name.lower().replace("_", "-")
+        return self_name == other_name
 
 
 def get_project(root: Path) -> Optional[Project]:
@@ -65,11 +72,11 @@ def get_project(root: Path) -> Optional[Project]:
     return project
 
 
-PATTERN = re.compile(r"(?:[└├]──\s)?([a-zA-Z0-9_-]+)\sv([0-9.]+)$", re.MULTILINE)
+UV_PTN = re.compile(r"(?:[└├]──\s)?([\w_-]+)\sv([\w\.]+)", re.MULTILINE)
 
 
-def parse_packages(s: str) -> Iterator[Package]:
-    tmp = PATTERN.findall(s)
+def _parse_packages(s: str) -> Iterator[Package]:
+    tmp = UV_PTN.findall(s)
     return starmap(Package, tmp)
 
 
@@ -78,4 +85,4 @@ def parse_dependencies(root: Path) -> Iterator[Package]:
     res = subprocess.run(
         "uv tree --no-dev", capture_output=True, cwd=root
     ).stdout.decode()
-    return parse_packages(res)
+    return _parse_packages(res)

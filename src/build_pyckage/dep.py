@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
@@ -15,27 +16,36 @@ class PathInfo:
         return self.pre / self.rel
 
 
-SITE_PACKAGES = ".venv/Lib/site-packages"
-
-
-def read_record(root: Path, package: Package) -> Iterable[PathInfo]:
-    site_root = root / SITE_PACKAGES
-    pkg_path = site_root / package.dist_info()
-    if not pkg_path.exists():
-        package.to_snake_case()
-        pkg_path = site_root / package.dist_info()
-
+def read_record(pkg_path: Path) -> Iterable[PathInfo]:
     lines = (pkg_path / "RECORD").read_text().splitlines()
     for line in lines:
         path, *_ = line.split(",", 1)
         if path.startswith(".."):
             continue
-        yield PathInfo(site_root, path)
+        yield PathInfo(pkg_path.parent, path)
+
+
+SITE_PACKAGES = ".venv/Lib/site-packages"
+META_PTN = re.compile(r"Name: ([\w_-]+)\nVersion: ([\w\.]+)\n")
+
+
+def _get_package_mapping(root: Path) -> Iterator[tuple[Package, Path]]:
+    meta_it = (root / SITE_PACKAGES).glob("*.dist-info/METADATA")
+    for meta in meta_it:
+        sg = META_PTN.search(meta.read_text(encoding="utf-8"))
+        if sg is None:
+            # should not happen
+            continue
+        name = sg.group(1)
+        version = sg.group(2)
+        yield Package(name, version), meta.parent
 
 
 def get_files(root: Path, packages: Iterable[Package]) -> Iterator[PathInfo]:
+    mapping = _get_package_mapping(root)
+    mapping = dict(mapping)
     for package in packages:
-        yield from read_record(root, package)
+        yield from read_record(mapping[package])
 
 
 def prepare_files(root: Path, project: Project) -> Optional[Iterator[PathInfo]]:
