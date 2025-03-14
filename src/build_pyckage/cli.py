@@ -14,11 +14,10 @@ def main():
     parser.add_argument(
         "package_path",
         type=Path,
-        nargs="?",
-        default=Path(),
         help="The directory containing the package to build",
     )
     parser.add_argument("--debug", action="store_true", help="Debug mode")
+
     args = parser.parse_args()
     package_path: Path = args.package_path
     debug: bool = args.debug
