@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from mashumaro.mixins.toml import DataClassTOMLMixin
@@ -6,16 +6,16 @@ from mashumaro.mixins.toml import DataClassTOMLMixin
 
 @dataclass
 class Config(DataClassTOMLMixin):
-    embed_python_path: Path
-    pyckage_path: Path
+    embed_python_path: Path = field(default_factory=Path)
+    pyckage_path: Path = field(default_factory=Path)
 
 
-CONFIG_FILE = Path.home() / ".build_pyckage_rc"
+CONFIG_FILE = Path.home() / ".build_pyckage_config"
 
 if not CONFIG_FILE.exists():
     print("Complete the configuration file first:")
     print(f"    {CONFIG_FILE}")
-    CONFIG_FILE.write_text(Config(Path(), Path()).to_toml())
+    CONFIG_FILE.write_text(Config().to_toml())
     exit(1)
 
 
