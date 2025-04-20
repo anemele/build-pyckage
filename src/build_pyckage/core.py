@@ -41,7 +41,7 @@ def _gen_items(
         yield ZipItem(
             zipfile.ZipInfo(f"{name}.bat"),
             f"{python} -c "
-            f'"import sys;sys.argv[0]="%~n0";from {module_name} import {func_name};sys.exit({func_name}())"'
+            f"\"import sys;sys.argv[0]='%~n0';from {module_name} import {func_name};sys.exit({func_name}())\""
             " %*\n"
             "@exit /b %errorlevel%\n",
         )
