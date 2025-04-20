@@ -19,7 +19,7 @@ def main():
         "-o",
         "--output",
         type=Path,
-        help="The path to the output directory. Defaults to the project path.",
+        help="The path to the output directory. Defaults the current path.",
     )
     parser.add_argument("--debug", action="store_true", help="Debug mode")
 

@@ -37,11 +37,11 @@ def _gen_items(
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
 
     for name, script in project.scripts.items():
-        module_name, func_name = script.split(":", 1)
+        pkg, fn = script.split(":", 1)
         yield ZipItem(
             zipfile.ZipInfo(f"{name}.bat"),
             f"{python} -c "
-            f"\"import sys;sys.argv[0]='%~n0';from {module_name} import {func_name};sys.exit({func_name}())\""
+            f"\"import sys;sys.argv[0]='%~n0';from {pkg} import {fn};sys.exit({fn}())\""
             " %*\n"
             "@exit /b %errorlevel%\n",
         )
@@ -73,7 +73,7 @@ def build_pyckage(
     filename = f"{project.name}-{project.version}-pyckage-py{py_ver}.zip"
 
     if output_path is None:
-        output_path = project_path / "dist"
+        output_path = Path()
     output_path.mkdir(parents=True, exist_ok=True)
 
     filepath = output_path / filename
