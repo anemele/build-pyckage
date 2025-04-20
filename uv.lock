@@ -1,9 +1,10 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 
 [[package]]
 name = "build-pyckage"
-version = "0.1.5"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "mashumaro", extra = ["toml"] },

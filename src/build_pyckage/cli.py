@@ -3,32 +3,40 @@
 import argparse
 from pathlib import Path
 
-from .core import create_zip
+from .core import build_pyckage
 
 
 def main():
     parser = argparse.ArgumentParser(
+        prog=__package__,
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "package_path",
+        "project_path", type=Path, help="The path to the project directory."
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
         type=Path,
-        help="The directory containing the package to build",
+        help="The path to the output directory. Defaults to the project path.",
     )
     parser.add_argument("--debug", action="store_true", help="Debug mode")
 
     args = parser.parse_args()
-    package_path: Path = args.package_path
-    debug: bool = args.debug
+    # print(args)
+    # return
 
-    if debug:
-        print("Debug mode")
-        create_zip(package_path)
-        return
+    if args.debug:
+        import logging
+
+        logging.basicConfig(level=logging.DEBUG)
+
+    project_path: Path = args.project_path
+    output_path: Path | None = args.output
 
     try:
-        filepath = create_zip(package_path)
+        filepath = build_pyckage(project_path, output_path)
         if filepath is not None:
             print(f"Package created at\n  {filepath}")
     except Exception as e:

@@ -1,63 +1,32 @@
-import re
-from dataclasses import dataclass
+from importlib.metadata import PackagePath, distribution
 from itertools import chain
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
+from typing import Iterator
 
-from .parser import Package, Project
-
-
-@dataclass
-class PathInfo:
-    pre: Path
-    rel: str
-
-    def join(self):
-        return self.pre / self.rel
+from .parser import Project
 
 
-def read_record(pkg_path: Path) -> Iterable[PathInfo]:
-    lines = (pkg_path / "RECORD").read_text().splitlines()
-    for line in lines:
-        path, *_ = line.split(",", 1)
-        if path.startswith(".."):
+def get_src_files(root: Path) -> Iterator[Path]:
+    root = root / "src"
+    for top, _, files in root.walk():
+        if top.name == "__pycache__":
             continue
-        yield PathInfo(pkg_path.parent, path)
+        for file in files:
+            rel = top.joinpath(file).relative_to(root)
+            yield rel
 
 
-SITE_PACKAGES = ".venv/Lib/site-packages"
-META_PTN = re.compile(r"Name: ([\w_-]+)\nVersion: ([\w\.]+)\n")
-
-
-def _get_package_mapping(root: Path) -> Iterator[tuple[Package, Path]]:
-    meta_it = (root / SITE_PACKAGES).glob("*.dist-info/METADATA")
-    for meta in meta_it:
-        sg = META_PTN.search(meta.read_text(encoding="utf-8"))
-        if sg is None:
-            # should not happen
+def _get_dep_files(pkg: str) -> Iterator[PackagePath]:
+    dist = distribution(pkg)
+    if dist.files is None:
+        return
+    for file in dist.files:
+        s = file.as_posix()
+        if s.startswith(".."):
             continue
-        name = sg.group(1)
-        version = sg.group(2)
-        yield Package(name, version), meta.parent
+        yield file
 
 
-def get_files(root: Path, packages: Iterable[Package]) -> Iterator[PathInfo]:
-    mapping = _get_package_mapping(root)
-    mapping = dict(mapping)
-    for package in packages:
-        yield from read_record(mapping[package])
-
-
-def prepare_files(root: Path, project: Project) -> Optional[Iterator[PathInfo]]:
-    deps = project.dependencies[1:]
-
-    def get_this_files(root: Path):
-        root = root / "src"
-        for top, _, files in root.walk():
-            if top.name == "__pycache__":
-                continue
-            for file in files:
-                rel = (top / file).relative_to(root)
-                yield PathInfo(root, str(rel))
-
-    return chain(get_this_files(root), get_files(root, deps))
+def get_dep_files(project: Project) -> Iterator[PackagePath]:
+    deps = project.dependencies
+    return chain.from_iterable(map(_get_dep_files, deps))
