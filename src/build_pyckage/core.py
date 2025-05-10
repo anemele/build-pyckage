@@ -19,7 +19,7 @@ BIN_PREFIX = "bin"
 LIB_PREFIX = "lib"
 SCRIPT_PREFIX = "_scripts"
 
-_PTH_LOCK = r"{BIN_PREFIX}\._pth.lock"
+_PTH_LOCK = rf"{BIN_PREFIX}\._pth.lock"
 
 python = f"@call %~dp0{BIN_PREFIX}\\python.exe"
 init_bat = rf"""@echo off
