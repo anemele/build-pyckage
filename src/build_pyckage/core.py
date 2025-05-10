@@ -15,7 +15,22 @@ class ZipItem:
     data: bytes | str
 
 
+BIN_PREFIX = "bin"
 LIB_PREFIX = "lib"
+SCRIPT_PREFIX = "_scripts"
+
+_PTH_LOCK = r"{BIN_PREFIX}\._pth.lock"
+
+python = f"@call %~dp0{BIN_PREFIX}\\python.exe"
+init_bat = rf"""@echo off
+if exist %~dp0{_PTH_LOCK} exit /b 0
+for /f %%f in ('dir {BIN_PREFIX}\python*._pth /b') do set a=%%f
+if %a% == "" (
+    echo ../{LIB_PREFIX}> {BIN_PREFIX}\{LIB_PREFIX}.pth
+) else (
+    echo ../{LIB_PREFIX}>> {BIN_PREFIX}\%a%
+)
+echo. > %~dp0{_PTH_LOCK}"""
 
 
 def _gen_items(
@@ -33,18 +48,16 @@ def _gen_items(
     for file in dep_files:
         yield ZipItem(zipfile.ZipInfo(f"{LIB_PREFIX}/{file}"), file.read_binary())
 
-    python = f"@call %~dp0{LIB_PREFIX}\\python.exe"
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
+    yield ZipItem(zipfile.ZipInfo("_init.bat"), init_bat)
 
+    script_dir = f"{LIB_PREFIX}/{SCRIPT_PREFIX}_of_{project.name}"
     for name, script in project.scripts.items():
         pkg, fn = script.split(":", 1)
-        yield ZipItem(
-            zipfile.ZipInfo(f"{name}.bat"),
-            f"{python} -c "
-            f"\"import sys;sys.argv[0]='%~n0';from {pkg} import {fn};sys.exit({fn}())\""
-            " %*\n"
-            "@exit /b %errorlevel%\n",
-        )
+        script_file = f"{script_dir}/{name}.py"
+        script_txt = f"import sys\nfrom {pkg} import {fn}\nsys.exit({fn}())\n"
+        yield ZipItem(zipfile.ZipInfo(script_file), script_txt)
+        yield ZipItem(zipfile.ZipInfo(f"{name}.bat"), f"{python} {script_file} %*")
 
 
 def _create_zip(path: Path, items: Iterator[ZipItem]):
