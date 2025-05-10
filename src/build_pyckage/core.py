@@ -35,7 +35,7 @@ def _gen_items(
     for file in dep_files:
         yield ZipItem(zipfile.ZipInfo(f"{LIB_PREFIX}/{file}"), file.read_binary())
 
-    python = f"@call %~dp0{BIN_PREFIX}\\python.exe"
+    python = f"@%~dp0{BIN_PREFIX}\\python.exe"
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
 
     script_dir = f"{LIB_PREFIX}/{SCRIPT_PREFIX}_of_{project.name}"
