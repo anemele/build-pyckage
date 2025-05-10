@@ -19,19 +19,6 @@ BIN_PREFIX = "bin"
 LIB_PREFIX = "lib"
 SCRIPT_PREFIX = "_scripts"
 
-_PTH_LOCK = rf"{BIN_PREFIX}\._pth.lock"
-
-python = f"@call %~dp0{BIN_PREFIX}\\python.exe"
-init_bat = rf"""@echo off
-if exist %~dp0{_PTH_LOCK} exit /b 0
-for /f %%f in ('dir {BIN_PREFIX}\python*._pth /b') do set a=%%f
-if %a% == "" (
-    echo ../{LIB_PREFIX}> {BIN_PREFIX}\{LIB_PREFIX}.pth
-) else (
-    echo ../{LIB_PREFIX}>> {BIN_PREFIX}\%a%
-)
-echo. > %~dp0{_PTH_LOCK}"""
-
 
 def _gen_items(
     project: Project,
@@ -48,8 +35,8 @@ def _gen_items(
     for file in dep_files:
         yield ZipItem(zipfile.ZipInfo(f"{LIB_PREFIX}/{file}"), file.read_binary())
 
+    python = f"@call %~dp0{BIN_PREFIX}\\python.exe"
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
-    yield ZipItem(zipfile.ZipInfo("_init.bat"), init_bat)
 
     script_dir = f"{LIB_PREFIX}/{SCRIPT_PREFIX}_of_{project.name}"
     for name, script in project.scripts.items():
