@@ -38,13 +38,14 @@ def _gen_items(
     python = f"@%~dp0{BIN_PREFIX}\\python.exe"
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
 
-    script_dir = f"{LIB_PREFIX}/{SCRIPT_PREFIX}_of_{project.name}"
+    script_dir = f"{LIB_PREFIX}\\{SCRIPT_PREFIX}_of_{project.name}"
+    bat_text = f"{python} %~dp0{script_dir}\\%~n0.py %*"
     for name, script in project.scripts.items():
         pkg, fn = script.split(":", 1)
-        script_file = f"{script_dir}/{name}.py"
-        script_txt = f"import sys\nfrom {pkg} import {fn}\nsys.exit({fn}())\n"
-        yield ZipItem(zipfile.ZipInfo(script_file), script_txt)
-        yield ZipItem(zipfile.ZipInfo(f"{name}.bat"), f"{python} {script_file} %*")
+        script_file = f"{script_dir}\\{name}.py"
+        script_text = f"import sys\nfrom {pkg} import {fn}\nsys.exit({fn}())"
+        yield ZipItem(zipfile.ZipInfo(script_file), script_text)
+        yield ZipItem(zipfile.ZipInfo(f"{name}.bat"), bat_text)
 
 
 def _create_zip(path: Path, items: Iterator[ZipItem]):
