@@ -10,7 +10,7 @@ import (
 // Websites that host Python releases
 var ftpMirrors = []string{
 	"https://mirrors.huaweicloud.com/python/",
-	// "https://www.python.org/ftp/python/",
+	"https://www.python.org/ftp/python/",
 	// aliyun mirror has different website structure, do not use it.
 	// "https://mirrors.aliyun.com/python-release/windows/",
 }
