@@ -10,9 +10,13 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 )
+
+// embed python is in {pyckagePath}/_embed
+const _embedPath = "_embed"
 
 // Find the Python version from the pyckage file name.
 // For example, given abc-0.1.0-pyckage-py3.12.zip returns 3.12
@@ -36,7 +40,16 @@ func findPythonEmbed(pyckagePath string) (string, error) {
 	}
 
 	pykgDir := filepath.Dir(pyckagePath)
-	pattern := filepath.Join(pykgDir, fmt.Sprintf("python-%s.*-embed-amd64.zip", pyver))
+	embedDir := filepath.Join(pykgDir, _embedPath)
+	// If embed directory does not exist, create it.
+	if _, err := os.Stat(embedDir); os.IsNotExist(err) {
+		err = os.Mkdir(embedDir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	pattern := filepath.Join(embedDir, fmt.Sprintf("python-%s.*-embed-amd64.zip", pyver))
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return "", err
@@ -49,10 +62,9 @@ func findPythonEmbed(pyckagePath string) (string, error) {
 	}
 
 	// If no embed files, trying downloading from the web.
-	embedPath := filepath.Join(pykgDir, fmt.Sprintf("python-%s-embed-amd64.zip", pyver))
-	err = downloadPythonEmbed(pyver, embedPath)
+	embedPath, err := downloadPythonEmbed(pyver, embedDir)
 	if err != nil {
-		absPath, _ := filepath.Abs(pykgDir)
+		absPath, _ := filepath.Abs(embedDir)
 		displayDownloadURL(absPath)
 		return "", err
 	}

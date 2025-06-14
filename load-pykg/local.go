@@ -49,7 +49,7 @@ func unzip(zipFilePath string, dest string) error {
 		}
 	}
 
-	fmt.Println("Unzipped", zipFilePath, "to", dest)
+	fmt.Println("Unzipped", zipFilePath, "==>", dest)
 	return nil
 }
 
@@ -100,7 +100,7 @@ func loadPyckage(pyckagePath string) error {
 			return err
 		}
 	}
-	fmt.Println("Initialized pyckage:", dest)
+	fmt.Println("Loaded pyckage:", dest)
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 )
 
 // Websites that host Python releases
@@ -48,10 +49,10 @@ func getPythonEmbedUrl(pyver string) (string, error) {
 }
 
 // Download the embed Python release from the web.
-func downloadPythonEmbed(pyver string, embedPath string) error {
+func downloadPythonEmbed(pyver string, embedDir string) (string, error) {
 	embedUrl, err := getPythonEmbedUrl(pyver)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// build a request
@@ -59,32 +60,33 @@ func downloadPythonEmbed(pyver string, embedPath string) error {
 	// to avoid 418 error
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0")
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("invalid status code: %d", resp.StatusCode)
+		return "", fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
 
 	// open local file
+	embedPath := path.Join(embedDir, path.Base(embedUrl))
 	w, err := os.Create(embedPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer w.Close()
 
 	// copy the response body to local file
-	fmt.Printf("Downloading %s to %s\n", embedUrl, embedPath)
+	fmt.Printf("Downloading %s ==> %s\n", embedUrl, embedPath)
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return embedPath, nil
 }
 
 // Display where to downlaod the embed Python release
