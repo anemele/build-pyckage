@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 // Websites that host Python releases
@@ -72,7 +72,7 @@ func downloadPythonEmbed(pyver string, embedDir string) (string, error) {
 	}
 
 	// open local file
-	embedPath := path.Join(embedDir, path.Base(embedUrl))
+	embedPath := filepath.Join(embedDir, filepath.Base(embedUrl))
 	w, err := os.Create(embedPath)
 	if err != nil {
 		return "", err
@@ -89,70 +89,12 @@ func downloadPythonEmbed(pyver string, embedDir string) (string, error) {
 	return embedPath, nil
 }
 
-// Display where to downlaod the embed Python release
+// Display where to download the embed Python release
 // and where to place it.
 func displayDownloadURL(place string) {
 	fmt.Println("Download python-embed from the following mirrors")
 	for _, mirror := range ftpMirrors {
 		fmt.Println("-", mirror)
 	}
-	fmt.Printf("  and move it to %s\n", place)
+	fmt.Println("  and move it to", place)
 }
-
-// Get the FTP web page and parse the required versions
-// The pyver is required to match the regex: \d\.\d+
-// Such as 3.8, 3.9, 3.10, 3.11, 3.12
-/* func getPythonVersions(pyver string, url string) ([]string, error) {
-	// build a request
-	request, err := http.NewRequest("GET", url, nil)
-	// to avoid 418 error
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0")
-	if err != nil {
-		return nil, err
-	}
-
-	// send the request to get the web page
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("invalid status code: %d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-
-	// read the response body
-	buf, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// convert the response body to string
-	text := string(buf)
-
-	// use regex to get the data, rather than parsing the HTML
-	pattern, err := regexp.Compile(fmt.Sprintf(`href="(%s\.\d+)/"`, pyver))
-	if err != nil {
-		return nil, err
-	}
-
-	// find all matches
-	matches := pattern.FindAllStringSubmatch(text, -1)
-	var versions []string
-	for _, match := range matches {
-		versions = append(versions, match[1])
-	}
-	sortVersions(versions)
-	return versions, nil
-} */
-
-// string comparison will return true for "3.8.9" > "3.8.10"
-// so we need to sort the versions first
-// with decrease order
-/* func sortVersions(versions []string) {
-	sort.Slice(versions, func(i, j int) bool {
-		vi, _ := strconv.ParseInt(strings.Split(versions[i], ".")[2], 10, 8)
-		vj, _ := strconv.ParseInt(strings.Split(versions[j], ".")[2], 10, 8)
-		return vi > vj
-	})
-} */
