@@ -16,7 +16,6 @@ class ZipItem:
 
 
 BIN_PREFIX = "bin"
-LIB_PREFIX = "lib"
 SCRIPT_PREFIX = "_scripts"
 
 
@@ -28,17 +27,17 @@ def _gen_items(
 ):
     for file in src_files:
         yield ZipItem(
-            zipfile.ZipInfo(f"{LIB_PREFIX}/{file}"),
+            zipfile.ZipInfo(f"{BIN_PREFIX}/{file}"),
             src_root.joinpath(file).read_bytes(),
         )
 
     for file in dep_files:
-        yield ZipItem(zipfile.ZipInfo(f"{LIB_PREFIX}/{file}"), file.read_binary())
+        yield ZipItem(zipfile.ZipInfo(f"{BIN_PREFIX}/{file}"), file.read_binary())
 
     python = f"@%~dp0{BIN_PREFIX}\\python.exe"
     yield ZipItem(zipfile.ZipInfo("python.bat"), f"{python} %*")
 
-    script_dir = f"{LIB_PREFIX}\\{SCRIPT_PREFIX}_of_{project.name}"
+    script_dir = f"{BIN_PREFIX}\\{SCRIPT_PREFIX}_of_{project.name}"
     bat_text = f"{python} %~dp0{script_dir}\\%~n0.py %*"
     for name, script in project.scripts.items():
         pkg, fn = script.split(":", 1)

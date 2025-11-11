@@ -1,0 +1,12 @@
+[package]
+name = "load-pyckage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+glob = "0.3.3"
+phf = { version = "0.13.1", features = ["macros"] }
+regex = "1.12.2"
+tinyget = { version = "1.1.2", features = ["https"] }
+zip = "6.0.0"
