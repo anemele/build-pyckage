@@ -1,5 +1,3 @@
-// 解压 zip 文件
-
 use crate::web::download_python_embed;
 use regex::Regex;
 use std::fs;
@@ -51,18 +49,14 @@ fn find_python_embed(pkg_path: &Path) -> anyhow::Result<PathBuf> {
 }
 
 fn extract_zip(zip_path: &Path, output_dir: &Path) -> anyhow::Result<()> {
-    // 打开 ZIP 文件
     let file = fs::File::open(zip_path)?;
     let mut archive = ZipArchive::new(file)?;
-    // 遍历 ZIP 文件中的每个条目
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
         let outpath = output_dir.join(file.name());
         if file.is_dir() {
-            // 创建目录
             fs::create_dir_all(&outpath)?;
         } else {
-            // 创建文件
             if let Some(parent) = outpath.parent() {
                 fs::create_dir_all(parent)?;
             }
