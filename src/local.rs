@@ -28,9 +28,7 @@ fn get_file_name(path: &Path) -> Option<&str> {
 }
 
 fn find_python_embed(pkg_path: &Path) -> anyhow::Result<PathBuf> {
-    let Some(s) = get_file_name(pkg_path) else {
-        anyhow::bail!("bad file name")
-    };
+    let s = get_file_name(pkg_path).ok_or(anyhow::anyhow!("bad file name"))?;
     let pyver = parse_python_version(s)?;
     let python_embed_pattern = format!("python-{pyver}.*-embed-amd64.zip");
 
@@ -80,14 +78,13 @@ fn extract_zip(zip_path: &Path, output_dir: &Path) -> anyhow::Result<()> {
 }
 
 pub fn load_pyckage(pkg_path: &Path) -> anyhow::Result<()> {
-    let Some(s) = get_file_name(pkg_path) else {
-        anyhow::bail!("bad file name");
-    };
-    let Some(s) = s.strip_suffix(".zip") else {
-        anyhow::bail!("invalid pyckage file name, not ends with .zip");
-    };
-    let dst = pkg_path.with_file_name(s);
+    let s = get_file_name(pkg_path)
+        .and_then(|s| s.strip_suffix(".zip"))
+        .ok_or(anyhow::anyhow!(
+            "invalid pyckage file name, not ends with .zip"
+        ))?;
 
+    let dst = pkg_path.with_file_name(s);
     extract_zip(pkg_path, &dst)?;
 
     let embed_python = find_python_embed(pkg_path)?;

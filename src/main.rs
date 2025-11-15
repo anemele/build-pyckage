@@ -9,7 +9,5 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("requires <pyckage>.zip");
     }
 
-    local::load_pyckage(Path::new(&args[1]))?;
-
-    Ok(())
+    local::load_pyckage(Path::new(&args[1]))
 }

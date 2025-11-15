@@ -25,9 +25,9 @@ static LATEST_RELEASES_MAP: phf::Map<&'static str, &'static str> = phf_map!(
 );
 
 pub fn download_python_embed(pyver: &str, embed_dir: &Path) -> anyhow::Result<PathBuf> {
-    let Some(ver) = LATEST_RELEASES_MAP.get(pyver) else {
-        anyhow::bail!("invalid Python version, or not supported yet.")
-    };
+    let ver = LATEST_RELEASES_MAP.get(pyver).ok_or(anyhow::anyhow!(
+        "invalid Python version, or not supported yet."
+    ))?;
 
     for mirror in FTP_MIRRORS {
         let name = format!("python-{ver}-embed-amd64.zip");
