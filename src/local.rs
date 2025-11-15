@@ -32,20 +32,31 @@ fn find_python_embed(pkg_path: &Path) -> anyhow::Result<PathBuf> {
         anyhow::bail!("bad file name")
     };
     let pyver = parse_python_version(s)?;
+    let python_embed_pattern = format!("python-{pyver}.*-embed-amd64.zip");
 
+    #[inline]
+    fn get_glob_last(pattern: &Path) -> Option<PathBuf> {
+        glob::glob(pattern.to_str()?).ok()?.last()?.ok()
+    }
+
+    // find from the same path
+    let t = pkg_path.with_file_name(&python_embed_pattern);
+    if let Some(p) = get_glob_last(&t) {
+        return Ok(p);
+    }
+
+    // find from the _embed path
     let embed_dir = pkg_path.with_file_name(_EMBED_PATH);
     if !embed_dir.exists() {
         fs::create_dir_all(&embed_dir)?;
     }
+    let t = embed_dir.join(python_embed_pattern);
+    if let Some(p) = get_glob_last(&t) {
+        return Ok(p);
+    }
 
-    let embed_pattern = embed_dir.join(format!("python-{pyver}.*-embed-amd64.zip"));
-    let ms = glob::glob(embed_pattern.to_str().unwrap())?;
-    if let Some(Ok(last)) = ms.last() {
-        return Ok(last);
-    };
-
-    let from_web = download_python_embed(&pyver, &embed_dir)?;
-    Ok(from_web)
+    // get from the web
+    download_python_embed(&pyver, &embed_dir)
 }
 
 fn extract_zip(zip_path: &Path, output_dir: &Path) -> anyhow::Result<()> {
